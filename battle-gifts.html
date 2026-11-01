@@ -55,7 +55,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a),Y0=291,Y1=318;
 let dead,pt,shake,units,fx,feed,P,E,level,rage,meter,over,spawnT,score,last=0;
 let RG=[new Map(),new Map()],RLK=new Map();
 function reset(){RG=[new Map(),new Map()];RLK=new Map();level=1;score=0;P={hp:3000,max:3000};E={hp:3000,max:3000};units=[];fx=[];feed=[];dead=[];pt=[];shake=0;qu=[];gate=[0,0];pj=[];fx2=[];MT=[];FP=[];rage=0;meter=0;over=false;spawnT=2}
-function mk(team,d,x,y,m){return{team,k:d.k,e:d.e,x,y,hp:d.hp*m,max:d.hp*m,dmg:d.dmg,sp:d.sp,rg:d.rg,cd:d.cd,c:0,sz:d.sz,ph:Math.random()*6,sw:0,hf:0,vx:0,al:1,ty:y,em:0,crowd:!!d.crowd}}
+function mk(team,d,x,y,m){return{team,k:d.k,e:d.e,x,y,hp:d.hp*m,max:d.hp*m,dmg:d.dmg,sp:d.sp,rg:d.crowd?d.rg*(.9+Math.random()*.2):d.rg,cd:d.cd,c:0,sz:d.sz,ph:Math.random()*6,sw:0,hf:0,vx:0,al:1,ty:y,em:0,crowd:!!d.crowd}}
 function say(s){feed.push({s,t:5});if(feed.length>4)feed.shift()}
 function handle(ev){if(over)return;
 if(ev.type==='chat'){chatEv(ev);return}
@@ -82,7 +82,7 @@ const inR=tg&&bd<=u.rg,atB=Math.abs(bx-u.x)<=u.rg+58,atk=(t,b2)=>{u.at={t:0,tg:t
 if(u.at||u.sg>0||u.fl>0){}
 else if(inR&&u.c<=0)atk(tg,false);
 else if(!inR&&atB&&u.c<=0)atk(base,true);
-else if(inR||atB){if(u.k==='t')u.guard=true;if((u.k==='a'||u.k==='e'||u.k==='i'||u.k==='r'||u.k==='w'||u.k==='d')&&tg&&bd<(u.k==='r'?58:(u.k==='w'||u.k==='d')?85:65)&&(u.team?u.x<710:u.x>90)){u.x-=f*sp*.6*dt;u.ph+=dt*sp*.15}}
+else if(inR||atB){if(u.k==='t')u.guard=true;if((u.k==='a'||u.k==='e'||u.k==='i'||u.k==='r'||u.k==='w'||u.k==='d')&&tg&&bd<(u.k==='r'?96:(u.k==='w'||u.k==='d')?85:65)&&(u.team?u.x<710:u.x>90)){u.x-=f*sp*.6*dt;u.ph+=dt*sp*.15}}
 else if(u.k==='b'&&tg&&!(u.hc>0)&&bd>u.rg+22&&bd<360&&bossHopStart(u,tg,bd)){}
 else if(SUP[u.k]&&supMove(u,f,sp,dt)){}
 else{let m=1;if(u.crowd){m=.65+.35*Math.sin(u.ph*.5+u.x*.1);if(Math.random()<dt*.06)fall(u)}if((u.k==='k'||u.k==='m')&&tg&&bd<260){m=1.8;u.chg=true}if(u.k==='t'&&tg&&bd<u.rg+90){m=.75;u.guard=true}const v=sp*m;
@@ -786,7 +786,7 @@ document.getElementById('us').textContent='Размер бойцов: '+Math.rou
 document.getElementById('ql').onclick=e=>{if(!QM){QM=true;QI=0}else QI++;if(QI>4){QM=false;QI=3}e.target.textContent='Качество: '+(QM?['низкое','среднее','высокое','очень высокое','макс'][QI]:'авто');try{localStorage.setItem('bgq',QI)}catch(e){}rs()};
 document.getElementById('auto').onclick=e=>{AUTO=!AUTO;e.target.textContent='Автовраги: '+(AUTO?'вкл':'выкл')};
 AT.o={d:.9,f:.55};AT.r={d:1,f:.6};AT.p={d:1,f:.55};
-const CR=[{k:'o',e:'',hp:34,dmg:2.2,sp:20,rg:22,cd:1.3,sz:24,crowd:1},{k:'r',e:'',hp:26,dmg:3.2,sp:26,rg:112,cd:2.4,sz:24,crowd:1},{k:'p',e:'',hp:30,dmg:2.6,sp:24,rg:52,cd:1.5,sz:24,crowd:1}];
+const CR=[{k:'o',e:'',hp:34,dmg:2.2,sp:20,rg:22,cd:1.3,sz:24,crowd:1},{k:'r',e:'',hp:26,dmg:3.2,sp:26,rg:158,cd:2.4,sz:24,crowd:1},{k:'p',e:'',hp:30,dmg:2.6,sp:24,rg:84,cd:1.5,sz:24,crowd:1}];
 SF.thwack=()=>{tone(180,.1,'triangle',.16,90);nz(.06,.1,1500,400,'lowpass')};SF.whiff=()=>nz(.14,.06,2500,800,'bandpass');SF.rock=()=>nz(.16,.1,500,1500,'bandpass');SF.fall=()=>{tone(110,.18,'sine',.22,45);nz(.1,.1,600,200,'lowpass')};
 SG.thwack=.07;SG.whiff=.1;SG.rock=.15;SG.fall=.2;
 Object.assign(SF,{
@@ -849,7 +849,7 @@ Object.assign(SG,{fly:.1,land:.1});
 
 const FALL_T=2.2;
 function fallLand(u){return .1+((u.fv|0)===1?.58:.4)}
-function fall(u){if(u.fl>0||u.k==='b'||u.held)return;u.fl=FALL_T;u.fv=Math.random()<.28?1:0;u.fld=0;u.at=null;snd('whiff');spark(u.x,u.y-22,4,'#fff',60)}
+function fall(u){if(u.fl>0||u.k==='b'||u.held)return;u.fl=FALL_T;u.fv=!u.crowd&&Math.random()<.28?1:0;u.fld=0;u.at=null;snd('whiff');spark(u.x,u.y-22,4,'#fff',60)}
 function landFx(u){snd('fall');const s=u.sc||1;for(let i=0;i<11;i++){const a=i<6?-1:1;pt.push({x:u.x+a*rnd(2,10)*s,y:u.y-1,vx:a*rnd(20,70),vy:rnd(-50,-12),l:.55,m:.55,c:'rgba(205,185,145,.75)',r:rnd(2.5,5),g:70})}}
 function fallSt(u){const T=FALL_T,t=T-u.fl,v=u.fv|0,A1=fallLand(u),HW=T-.8,fm0=FSS[u.k]&&FSS[u.k].f.every(f=>f.ok);let r=0,dy=0,sq=1,air=0,st=0,F=null,rg=0,spin=0;
  if(t<.1){r=-.32*(t/.1);F=[{i:0,a:1}]}
