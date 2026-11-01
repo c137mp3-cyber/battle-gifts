@@ -22,7 +22,7 @@ srv.listen(8080,()=>console.log('игра: http://localhost:8080'));
 function go(){const C=new (L.WebcastPushConnection||L.TikTokLiveConnection)(NICK,{});
 C.on('gift',d=>{const g=d.giftDetails||{};const t=d.giftType??g.giftType;if(t===1&&!d.repeatEnd)return;const coins=d.diamondCount??g.diamondCount??1;const user=d.nickname||(d.user&&(d.user.nickname||d.user.uniqueId))||d.uniqueId||'Зритель';const name=g.giftName||d.giftName||'';console.log('подарок','«'+name+'»',coins,'монет x',d.repeatCount||1,'id',d.giftId??g.id??'');send({type:'gift',coins,count:d.repeatCount||1,user,name,uid:d.uniqueId||(d.user&&d.user.uniqueId)||user,pic:picOf(d)})});
 C.on('chat',d=>{const text=d.comment||'';if(!text)return;const user=d.nickname||(d.user&&(d.user.nickname||d.user.uniqueId))||d.uniqueId||'Зритель';console.log('чат',user+':',text);send({type:'chat',user,uid:d.uniqueId||(d.user&&d.user.uniqueId)||user,text,pic:picOf(d)})});
-C.on('like',d=>{console.log('лайки',d.likeCount);send({type:'like',count:d.likeCount||1})});
+C.on('like',d=>{const user=d.nickname||(d.user&&(d.user.nickname||d.user.uniqueId))||d.uniqueId||'';console.log('лайки',d.likeCount,user);send({type:'like',count:d.likeCount||1,user,uid:d.uniqueId||(d.user&&d.user.uniqueId)||user,pic:picOf(d)})});
 C.on('disconnected',()=>setTimeout(go,5000));
 C.connect().then(()=>console.log('эфир подключён')).catch(e=>{console.log('ошибка:',e.message||e);setTimeout(go,10000)})}
 go();
