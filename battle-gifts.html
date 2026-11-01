@@ -735,13 +735,13 @@ function addBub(o){cx.save();const R=10;let w,h,L=null;
 if(o.k==='c'){cx.font='12px system-ui';L=wrapT(o.text,140,3);cx.font='bold 10px system-ui';const nw=cx.measureText(o.nm).width;cx.font='12px system-ui';let tw=0;for(const l of L)tw=Math.max(tw,cx.measureText(l).width);w=Math.max(nw+2*R+22,tw+20,72);h=34+L.length*15}
 else{cx.font='bold 12px system-ui';const tw=cx.measureText(o.text).width;o.tw=tw;const gi=GIM[o.gk];o.iw=gi&&gi.naturalWidth?Math.min(34,gi.naturalWidth*24/gi.naturalHeight):26;w=tw+2*R+o.iw+30;h=2*R+14}
 cx.restore();Object.assign(o,{w,h,L,R,t0:o.t0||Date.now()/1000});CB.push(o)}
-function chatEv(ev){let t=String(ev.text||'').replace(/\s+/g,' ').trim();if(!t||/https?:|www\.|t\.me|\.com\b|\.ru\b/i.test(t)||BAD.test(t))return;const now=Date.now()/1000;if(now-(LASTT.get(t)||0)<25)return;LASTT.set(t,now);if(LASTT.size>200)LASTT.delete(LASTT.keys().next().value);
-if(t.length>58)t=t.slice(0,56)+'…';const uid=ev.uid||ev.user||'?';CQ.push({nm:ev.user||'Зритель',uid,pic:ev.pic,text:t,fresh:!SEEN.has(uid)});if(CQ.length>8)CQ.shift()}
+function chatEv(ev){let t=String(ev.text||'').replace(/\s+/g,' ').trim();if(!t||/https?:|www\.|t\.me|\.com\b|\.ru\b/i.test(t)||BAD.test(t))return;const now=Date.now()/1000,dk=(ev.uid||ev.user||'?')+'|'+t;if(now-(LASTT.get(dk)||0)<20)return;LASTT.set(dk,now);if(LASTT.size>200)LASTT.delete(LASTT.keys().next().value);
+if(t.length>58)t=t.slice(0,56)+'…';const uid=ev.uid||ev.user||'?';CQ.push({nm:ev.user||'Зритель',uid,pic:ev.pic,text:t,fresh:!SEEN.has(uid),at:now});if(CQ.length>16)CQ.shift()}
 const ANCH=[.06,.17,.3,.43,.56,.68,.79,.89];
 function crowdPt(avoid){const c=[];for(let ly=0;ly<2;ly++)for(const u of ANCH){const cc=CRW[ly],dw=cc[1],dh=dw*(IM.cr?IM.cr.height/IM.cr.width:.3814);c.push([cc[0]+u*dw,HH+SB+cc[2]-dh+.1*dh])}
 let best=null,bd=-1;for(let i=0;i<10;i++){const q=c[Math.random()*c.length|0];let d=1e9;for(const b of avoid)d=Math.min(d,Math.abs(b.x-q[0]));if(d>bd){bd=d;best=q}}return best}
 function chatTick(T){CB.length&&CB.splice(0,CB.length,...CB.filter(b=>T-b.t0<b.dur+.1));
-const act=CB.filter(b=>b.k==='c');if(!CQ.length||T-lastBub<2.6||act.length>=3)return;
+const act=CB.filter(b=>b.k==='c');while(CQ.length&&Date.now()/1000-CQ[0].at>45)CQ.shift();const gap=CQ.length>=7?1.5:CQ.length>=4?2:2.6;if(!CQ.length||T-lastBub<gap||act.length>=(CQ.length>=4?4:3))return;
 let i=CQ.findIndex(q=>q.fresh);if(i<0)i=Math.random()*CQ.length|0;const q=CQ.splice(i,1)[0];SEEN.add(q.uid);if(SEEN.size>500)SEEN.delete(SEEN.values().next().value);lastBub=T;
 const [x,y]=crowdPt(CB);avatar(q.uid,q.pic);addBub({k:'c',nm:q.nm,uid:q.uid,text:q.text,x,y,dur:Math.min(6.5,3.4+q.text.length*.055),t0:T});cb.push({x,t0:T})}
 function plate(ev,kind,n,x,y,t0){let c=0;for(const b of CB)if(b.k==='g'&&Math.abs(b.x-x)<110&&t0-b.t0<b.dur&&b.t0-t0<b.dur)c++;y-=c*24;const uid=ev.uid||ev.user||'?';avatar(uid,ev.pic);addBub({k:'g',nm:ev.user||'Зритель',uid,text:(ev.user||'Зритель')+(n>1||typeof n==='string'?' ×'+n:''),gk:kind,x,y,dur:2.6,t0})}
