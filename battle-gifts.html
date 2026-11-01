@@ -44,9 +44,10 @@ b.fillStyle='#4c4038';b.fillRect(115,345,570,60);
 for(let i=0;i<6;i++){const x=115+i*95+11,w=73;b.fillStyle='#241a2c';b.beginPath();b.moveTo(x,405);b.lineTo(x,375);b.arc(x+w/2,375,w/2,Math.PI,0);b.lineTo(x+w,405);b.fill()}
 for(let i=0;i<=6;i++){b.fillStyle='#3d3240';b.fillRect(115+i*95-11,345,22,105)}
 g=b.createLinearGradient(0,330,0,450);g.addColorStop(0,'rgba(255,170,120,0)');g.addColorStop(1,'rgba(120,70,130,.75)');b.fillStyle=g;b.fillRect(0,330,WW,120)}
-const QW=[800,1280,1600,1920,2560];let QI=4;try{const v=parseInt(localStorage.getItem('bgq'));if(v>=0&&v<=4)QI=v}catch(e){}let bgC=null,vgC=null,SH={};
-function rs(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2.5);let w=Math.round(r.width*d)||WW;w=Math.min(w,QW[QI]);cv.width=w;const HT=HH+(BOT?SB+FTR:0);cv.height=Math.round(w*HT/WW);const gg=document.getElementById('g');gg.style.aspectRatio=WW+'/'+HT;gg.style.width='min(100vw,calc(100vh*'+(WW/HT)+'))';k=cv.width/WW;bgC=null;vgC=null;SH={};mkBg()}
-addEventListener('resize',rs);
+const QW=[800,1280,1600,1920,2560];let QI=3;try{const v=parseInt(localStorage.getItem('bgq'));if(v>=0&&v<=4)QI=v}catch(e){}let bgC=null,vgC=null,SH={};
+let rsW=0,rsT=0;
+function rs(){const r=cv.getBoundingClientRect();rsW=r.width;const d=Math.min(devicePixelRatio||1,2.5);let w=Math.round(r.width*d)||WW;w=Math.min(w,QW[QI]);cv.width=w;const HT=HH+(BOT?SB+FTR:0);cv.height=Math.round(w*HT/WW);const gg=document.getElementById('g');gg.style.aspectRatio=WW+'/'+HT;gg.style.width='min(100vw,calc(100vh*'+(WW/HT)+'))';k=cv.width/WW;bgC=null;vgC=null;SH={};mkBg()}
+addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(Math.abs(cv.getBoundingClientRect().width-rsW)>6)rs()},250)});
 const TY={s:{e:'🗡️',hp:40,dmg:6,sp:42,rg:22,cd:.7,sz:22},a:{e:'🏹',hp:25,dmg:5,sp:36,rg:120,cd:.9,sz:22},t:{e:'🛡️',hp:140,dmg:5,sp:30,rg:22,cd:.8,sz:28},k:{e:'🐎',hp:110,dmg:16,sp:68,rg:26,cd:.8,sz:30},d:{e:'🐉',hp:420,dmg:30,sp:50,rg:90,cd:1,sz:44}};
 const EN={e:'👹',hp:30,dmg:5,sp:32,rg:22,cd:.9,sz:24},EB={e:'👺',hp:120,dmg:12,sp:24,rg:24,cd:1,sz:36};
 const tier=c=>c>=20?'d':c>=10?'k':c>=6?'t':c>=5?'a':'s';
@@ -409,7 +410,7 @@ gb:[[.5,.22,.55,.15,.16,.13,['I2',.2,'W',.15]],[.55,.8,.5,.5,.35,.35,['AK',.2]],
 bs:[[.5,.8,.5,.45,.4,.4,['AKw',.15,'AKs',-.2]],[.4,.45,.2,.25,.25,.22,['AK',.12],['FS',.05,0]],[.35,.38,.15,.43,.17,.08,['K',-.08,'AKs',-.25,'I2',-.04]],[.58,.3,.78,.2,.25,.17,['FL',.22,'AKw',.2]],[.7,.6,.88,.45,.17,.3,['I1',.12,'W90',.12,'AKs',-.35]],[.25,.55,.15,.7,.15,.15,['W',-.4,'AK',.9]],[.4,.7,.37,.9,.18,.12,['W',.3],['WP',0,-.03]],[.65,.75,.68,.92,.18,.12,['W',-.3],['WN',0,-.03]],{e:[.2,.25,.06,.05]}]
 };
 let SKG=null;const SGM=.14,SGN=14;const STX={};
-function sgInit(){try{const c=document.createElement('canvas');c.width=64;c.height=64;let g=c.getContext('webgl2',{premultipliedAlpha:true,alpha:true,antialias:false});const v2=!!g;if(!g)g=c.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false});if(!g)return false;
+function sgInit(){try{const c=document.createElement('canvas');c.width=64;c.height=64;c.addEventListener('webglcontextlost',e=>{e.preventDefault();SKG=null;for(const q in STX)delete STX[q]});let g=c.getContext('webgl2',{premultipliedAlpha:true,alpha:true,antialias:false});const v2=!!g;if(!g)g=c.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false});if(!g)return false;
 const sh=(t,src)=>{const o=g.createShader(t);g.shaderSource(o,src);g.compileShader(o);if(!g.getShaderParameter(o,g.COMPILE_STATUS))throw g.getShaderInfoLog(o);return o};
 const vs=sh(g.VERTEX_SHADER,`attribute vec2 uv;uniform vec4 b0[${SGN}];uniform vec4 b1[${SGN}];uniform vec4 b2[${SGN}];uniform float A;varying vec2 vu;
 void main(){vec2 p=uv;for(int i=0;i<${SGN};i++){vec4 a=b0[i],b=b1[i];vec2 d=(uv-a.zw)/max(b.xy,vec2(.001));float m=1.-smoothstep(.6,1.,length(d));
@@ -717,7 +718,7 @@ const hx=6,hy=-18,L=28,lx=hx+Math.sin(a)*L,ly=hy-Math.cos(a)*L;
 Ln(hx,hy+4,lx,ly,'#8a5a2b',2.6);Eo(hx,hy,2.4,2.4,'#f1c9a0',0);rope(u,lx,ly)};
 let lastD=0,fAcc=0,fN=0,fpsV=0,fWarm=0;
 function loop(t){requestAnimationFrame(loop);const el=t-lastD;if(el<27)return;lastD=t;const dt=Math.min(.05,el/1000);last=t;if(over&&(overT-=dt)<=0)reset();upd(dt);draw();
-if(fWarm<60){fWarm++;fAcc=0;fN=0}else{fAcc+=Math.min(el,200);fN++}if(fN>=40){const av=fAcc/fN;fpsV=1000/av;fAcc=0;fN=0;if(av>42&&QI>0&&!QM){QI--;try{localStorage.setItem('bgq',QI)}catch(e){}rs();fWarm=30}const f=document.getElementById('fps');if(f)f.textContent=Math.round(fpsV)+' fps · '+cv.width+'px'}}
+if(fWarm<60){fWarm++;fAcc=0;fN=0}else{fAcc+=Math.min(el,200);fN++}if(fN>=40){const av=fAcc/fN;fpsV=1000/av;fAcc=0;fN=0;if(av>42&&QI>0&&!QM){QI--;rs();draw();fWarm=30}const f=document.getElementById('fps');if(f)f.textContent=Math.round(fpsV)+' fps · '+cv.width+'px'}}
 let QM=false;
 const FN=['Аня_Лис','vlad_228','Katya🌸','DimaBlue','NeoKing','Маша','Tiger_UA','Sasha','Lola','Артём','Ksu','MaxPower'],FT=['Го синие!','Красные вперёд!!','🔥🔥🔥','Роза за синих!','Кто побеждает?','Ахах ну даёт','Давай давай!!','Привет из Варшавы 👋','Выпускайте босса!!!','gg','Красивая игра, кто делал?','Дракон бьёт сильнее всех','Я за красных до конца'];
 const pk=a=>a[Math.random()*a.length|0];
@@ -845,7 +846,7 @@ for(let y=y0;y<y1;y+=2){const f=(y-y0)/(y1-y0),dx=Math.sin(y/k*.4+T*2.1)*(.5+f)*
 const CRW=[[0,400,10,0],[380,424,-4,1.7]];
 
 let GLS=null;const CRH=190;
-function crInit(){try{const c=document.createElement('canvas');c.width=64;c.height=64;let g=c.getContext('webgl2',{premultipliedAlpha:true,alpha:true,antialias:false});const v2=!!g;if(!g)g=c.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false});if(!g)return false;
+function crInit(){try{const c=document.createElement('canvas');c.width=64;c.height=64;c.addEventListener('webglcontextlost',e=>{e.preventDefault();GLS=null});let g=c.getContext('webgl2',{premultipliedAlpha:true,alpha:true,antialias:false});const v2=!!g;if(!g)g=c.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false});if(!g)return false;
 const sh=(t,src)=>{const o=g.createShader(t);g.shaderSource(o,src);g.compileShader(o);if(!g.getShaderParameter(o,g.COMPILE_STATUS))throw g.getShaderInfoLog(o);return o};
 const vs=sh(g.VERTEX_SHADER,`attribute vec2 uv;uniform vec4 L;uniform vec3 P;uniform float T;uniform vec2 R;uniform vec3 B[6];uniform vec4 PE[16];uniform vec4 TH[4];varying vec2 vu;
 float ss(float a,float b,float x){float t=clamp((x-a)/(b-a),0.,1.);return t*t*(3.-2.*t);}
