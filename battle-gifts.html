@@ -20,7 +20,7 @@ input{width:55%;padding:6px;border-radius:8px;border:0;background:#14101f;color:
 <div id="g"><canvas id="c"></canvas><button id="gear">⚙</button></div>
 <div id="pn">
 <div style="display:flex;gap:8px;width:100%"><div id="gl" class="gcol"><b>🔵 Левая команда</b></div><div id="gr" class="gcol"><b>🔴 Правая команда</b></div></div><button id="lk">❤️ +25</button>
-<button id="sim">💬 Имитация чата: выкл</button><button id="fs">⛶ на весь экран</button><button id="auto">Автовраги: выкл</button><button id="sfx">🔊 звук</button><button id="mus">🎶 музыка</button><button id="us">Размер бойцов</button><button id="an">Анимация: полная</button><button id="ql">Качество: авто</button> <span id="fps"></span><details open><summary>Подключение к эфиру</summary>
+<button id="sim">💬 Имитация чата: выкл</button><button id="fs">⛶ на весь экран</button><button id="auto">Автовраги: выкл</button><button id="sfx">🔊 звук</button><button id="mus">🎶 музыка</button><button id="tts">🗣 Озвучка: выкл</button><button id="us">Размер бойцов</button><button id="an">Анимация: полная</button><button id="ql">Качество: авто</button> <span id="fps"></span><details open><summary>Подключение к эфиру</summary>
 <input id="ws" value="ws://localhost:8080"> <button id="cn">Связать</button> <span id="st">не подключено</span></details>
 </div>
 <script>
@@ -1187,6 +1187,39 @@ camX+=(tx-camX)*Math.min(1,dt*1.6);const vw=WW/Z,vh=HT/Z,left=Math.max(0,Math.mi
 cv.style.transform=Z===1?'':'translate('+(-Z*left/WW*100)+'%,'+(-Z*top/HT*100)+'%) scale('+Z+')'}
 document.getElementById('an').onclick=e=>{SKON=!SKON;e.target.textContent='Анимация: '+(SKON?'полная':'простая');try{localStorage.setItem('bgan',SKON?'1':'0')}catch(x){}};document.getElementById('an').textContent='Анимация: '+(SKON?'полная':'простая');
 
+
+/*TTS*/
+const TTS={mode:0,q:[],busy:0,cache:new Map(),last:new Map(),lastAny:0,ok:null};
+try{TTS.mode=+localStorage.getItem('bgtts')||0}catch(e){}
+const TTSN=['выкл','подарки','подарки + чат'];
+const TTSBAD=/(хуй|хуе|хуё|хуя|пизд|ебан|ебат|еблан|ебал|ёбан|сука|суки|бляд|блят|блять|залуп|мудак|мудил|пидор|пидар|педик|гондон|шлюх|говн|fuck|shit|nigg|cunt|bitch|whore|dick|cock|rape|nazi|hitler)/i;
+const TTSTR=[['shch','щ'],['sch','щ'],['sh','ш'],['ch','ч'],['zh','ж'],['kh','х'],['th','з'],['ph','ф'],['ck','к'],['ee','и'],['oo','у'],['ya','я'],['yu','ю'],['yo','ё'],['ey','ей'],['ay','ай'],['oy','ой'],['ts','ц'],['qu','кв'],['a','а'],['b','б'],['c','к'],['d','д'],['e','е'],['f','ф'],['g','г'],['h','х'],['i','и'],['j','дж'],['k','к'],['l','л'],['m','м'],['n','н'],['o','о'],['p','п'],['q','к'],['r','р'],['s','с'],['t','т'],['u','у'],['v','в'],['w','в'],['x','кс'],['y','и'],['z','з']];
+function ttsTr(s){s=s.toLowerCase();let o='',i=0;while(i<s.length){let hit=false;for(const [a,b] of TTSTR){if(s.startsWith(a,i)){o+=b;i+=a.length;hit=true;break}}if(!hit){o+=s[i];i++}}return o}
+function ttsNick(s){s=String(s||'').normalize('NFKC');
+s=s.replace(/[​-‏‪-‮︀-️]/g,'').replace(/[\p{Extended_Pictographic}\p{So}\p{Sk}\p{Sm}\p{Cs}]/gu,' ');
+s=s.replace(/([a-zа-яё])([A-ZА-ЯЁ])/g,'$1 $2').replace(/(^|[\s_.\-])[xXхХ]{1,2}(?=$|[\s_.\-])/g,' ').replace(/[_.\-·•|/\\~^*+=<>@#:;,!?()\[\]{}'"`]+/g,' ');
+s=s.replace(/[^\p{Script=Latin}\p{Script=Cyrillic}\p{N}\s]/gu,' ').replace(/(.)\1{3,}/gu,'$1$1').replace(/\d{5,}/g,m=>m.slice(0,3)).replace(/\s+/g,' ').trim();
+if(!/[\p{L}]/u.test(s)||TTSBAD.test(s))return 'зритель';
+s=s.split(' ').map(w=>/[a-z]/i.test(w)&&!/[а-яё]/i.test(w)?ttsTr(w):w).join(' ');if(TTSBAD.test(s))return 'зритель';
+if(s.length>22){s=s.slice(0,22);s=s.slice(0,Math.max(6,s.lastIndexOf(' ')>5?s.lastIndexOf(' '):22))}
+return s||'зритель'}
+function ttsText(s,max){s=String(s||'').normalize('NFKC').replace(/[\p{Extended_Pictographic}\p{So}\p{Sk}\p{Cs}️​-‏]/gu,' ').replace(/https?:\/\/\S+/g,' ').replace(/[^\p{L}\p{N}\s.,!?\-]/gu,' ').replace(/\s+/g,' ').trim();if(TTSBAD.test(s))return '';return s.slice(0,max||90)}
+const TTSV=['ru-RU-SvetlanaNeural','ru-RU-DmitryNeural'];
+function ttsSay(text,team,pr){if(!TTS.mode||!text)return;if(TTS.q.length>=(pr?4:2)){if(!pr)return;TTS.q.shift()}TTS.q.push({text,team});ttsPump()}
+async function ttsFetch(text,v){const k=v+'|'+text;if(TTS.cache.has(k))return TTS.cache.get(k);if(TTS.ok===false)return null;
+const ac2=new AbortController(),to=setTimeout(()=>ac2.abort(),7000);try{const r=await fetch('/tts?v='+v+'&t='+encodeURIComponent(text),{signal:ac2.signal});if(!r.ok||!/audio/.test(r.headers.get('content-type')||''))throw 0;const b=await r.arrayBuffer();if(TTS.cache.size>60)TTS.cache.delete(TTS.cache.keys().next().value);TTS.cache.set(k,b);return b}catch(e){return null}finally{clearTimeout(to)}}
+function ttsBrowser(text,team){return new Promise(res=>{try{const ss=window.speechSynthesis;if(!ss)return res();const u=new SpeechSynthesisUtterance(text);u.lang='ru-RU';u.rate=1.02;u.pitch=team?.75:1.15;const vs=ss.getVoices().filter(v=>/^ru/i.test(v.lang));if(vs.length){const f=vs.find(v=>team?/male|dmitr|pavel|дмитр|мужск/i.test(v.name)&&!/female/i.test(v.name):/female|svetl|светл|женск|anna|milena/i.test(v.name));u.voice=f||vs[0]}u.onend=u.onerror=()=>res();ss.speak(u);setTimeout(res,9000)}catch(e){res()}})}
+async function ttsPump(){if(TTS.busy)return;TTS.busy=1;try{while(TTS.q.length&&TTS.mode){const it=TTS.q.shift(),v=TTSV[it.team?1:0];const b=await ttsFetch(it.text,v);let done=false;
+if(b&&AC){try{const buf=await AC.decodeAudioData(b.slice(0));await new Promise(res=>{const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=1.25;s.buffer=buf;s.connect(g);g.connect(AC.destination);s.onended=res;s.start();setTimeout(res,Math.min(12000,buf.duration*1000+400))});done=true}catch(e){}}
+if(!done)await ttsBrowser(it.text,it.team);await new Promise(r=>setTimeout(r,180))}}finally{TTS.busy=0}}
+const TTSAC={'Роза':'розу','Воздушный поцелуй':'воздушный поцелуй','Сердце-облако':'сердце-облако','Крылья ангела':'крылья ангела','Волшебная палочка':'волшебную палочку','Золотой игрок':'золотого игрока','Сундук':'сундук','Око за око':'око за око','Инопланетный':'инопланетного'};
+const TTSP=[(n,g)=>'Спасибо, '+n+', за '+g+'!',(n,g)=>n+', спасибо за '+g+'!',(n,g)=>n+' отправил '+g+'. Спасибо!'];
+function ttsGift(ev,team){if(!TTS.mode)return;const now=Date.now()/1000,uk=ev.uid||ev.user||'?',lt=TTS.last.get(uk);if(lt&&now-lt<14)return;if(now-TTS.lastAny<1.2&&(ev.coins||1)<30)return;TTS.last.set(uk,now);TTS.lastAny=now;if(TTS.last.size>300)TTS.last.delete(TTS.last.keys().next().value);
+const nick=ttsNick(ev.user),cnt=ev.count||1,g=GT.find(x=>x.re&&x.re.test(String(ev.name||'').trim())),gn=(g&&TTSAC[g.n])||'подарок';
+let t=cnt>=5?'Вау! '+nick+' отправил целую серию подарков. Спасибо!':TTSP[Math.random()*TTSP.length|0](nick,gn);ttsSay(t,team,(ev.coins||1)>=30)}
+const _giftEv=giftEv;giftEv=function(ev){_giftEv(ev);try{const g=GM.find(x=>x[0].test((ev.name||'').trim()));ttsGift(ev,g?g[2]:(Math.random()<.5?0:1))}catch(e){}};
+if(typeof chatEv==='function'){const _chatEv=chatEv;chatEv=function(ev){_chatEv(ev);try{if(TTS.mode<2)return;const now=Date.now()/1000;if(now-(TTS.lastChat||0)<7)return;const t=ttsText(ev.text,80);if(!t||t.length<4)return;TTS.lastChat=now;ttsSay(ttsNick(ev.user)+' пишет: '+t,0,0)}catch(e){}}}
+const ttsBtn=document.getElementById('tts');if(ttsBtn){const upd=()=>{ttsBtn.textContent='🗣 Озвучка: '+TTSN[TTS.mode];ttsBtn.style.opacity=TTS.mode?1:.6};upd();ttsBtn.onclick=()=>{ac();TTS.mode=(TTS.mode+1)%3;TTS.q.length=0;try{localStorage.setItem('bgtts',TTS.mode)}catch(e){}upd();if(TTS.mode)ttsSay('Озвучка включена',0,1)}}
 SF.sp_w=function(){return SF.sp_a.apply(this,arguments)};SG.sp_w=.25;
 
 reset();rs();requestAnimationFrame(loop);

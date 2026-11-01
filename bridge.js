@@ -6,12 +6,21 @@ const I192=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAABNv0lEQVR4
 const MAN=JSON.stringify({name:'Битва подарков',short_name:'Битва',start_url:'/',scope:'/',display:'fullscreen',display_override:['fullscreen','standalone'],orientation:'any',background_color:'#0b0814',theme_color:'#0b0814',icons:[{src:'/i192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/i512.png',sizes:'512x512',type:'image/png',purpose:'any'},{src:'/i512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]});
 const SW="self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{});";
 const path=require('path'),os=require('os');
+let EDGE=null;try{EDGE=require('node-edge-tts').EdgeTTS}catch(e){console.log('озвучка: нет node-edge-tts (npm i node-edge-tts), будет голос браузера')}
 function newest(){return __dirname+'/battle-gifts.html'}
 const srv=http.createServer((q,r)=>{const u=q.url.split('?')[0];
 if(u==='/manifest.json'){r.writeHead(200,{'Content-Type':'application/manifest+json'});return r.end(MAN)}
 if(u==='/sw.js'){r.writeHead(200,{'Content-Type':'text/javascript'});return r.end(SW)}
 if(u==='/i192.png'){r.writeHead(200,{'Content-Type':'image/png'});return r.end(I192)}
 if(u==='/i512.png'){r.writeHead(200,{'Content-Type':'image/png'});return r.end(I512)}
+if(u==='/tts'){const sp=new URL(q.url,'http://x').searchParams;const text=(sp.get('t')||'').slice(0,220),voice=sp.get('v')||'ru-RU-SvetlanaNeural';
+if(!text||!/^[a-z]{2}-[A-Z]{2}-\w+Neural$/.test(voice)){r.writeHead(400);return r.end('bad')}
+const key=require('crypto').createHash('md5').update(voice+'|'+text).digest('hex'),file=path.join(os.tmpdir(),'bgtts_'+key+'.mp3');
+const out=()=>{try{const b=fs.readFileSync(file);r.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':b.length,'Cache-Control':'max-age=86400'});r.end(b)}catch(e){r.writeHead(500);r.end('err')}};
+if(fs.existsSync(file)&&fs.statSync(file).size>500)return out();
+if(!EDGE){r.writeHead(503);return r.end('no edge-tts')}
+const tmp=file+'.'+process.pid+'.tmp';
+new EDGE({voice,lang:voice.slice(0,5),outputFormat:'audio-24khz-48kbitrate-mono-mp3',timeout:9000}).ttsPromise(text,tmp).then(()=>{try{fs.renameSync(tmp,file)}catch(e){}out()}).catch(e=>{console.log('tts ошибка:',e.message||e);try{fs.unlinkSync(tmp)}catch(x){}r.writeHead(502);r.end('fail')});return}
 try{r.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});r.end(fs.readFileSync(newest()))}catch(e){r.writeHead(404);r.end('нет файла')}});
 const wss=new WebSocketServer({server:srv});
 const picOf=d=>{const u=d.user||{},pp=u.profilePicture||d.profilePicture||{};return d.profilePictureUrl||u.profilePictureUrl||(pp.url&&pp.url[0])||(pp.urls&&pp.urls[0])||''};
